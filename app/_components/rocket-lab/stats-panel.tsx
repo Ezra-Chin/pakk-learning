@@ -9,15 +9,24 @@ import {
   thrustPct,
 } from "@/lib/rocket-lab/physics";
 import type { Action } from "@/lib/rocket-lab/state";
-import { LEARN_BUTTON, PANEL, PANEL_HINT, PANEL_LABEL, TRACK } from "./styles";
+import {
+  LEARN_BUTTON,
+  PANEL,
+  PANEL_HINT,
+  PANEL_LABEL,
+  TRACK,
+  dimClass,
+} from "./styles";
 
 export function StatsPanel({
   parts,
   mascot,
+  dimmed = false,
   dispatch,
 }: {
   parts: Parts;
   mascot: string;
+  dimmed?: boolean;
   dispatch: Dispatch<Action>;
 }) {
   const m = calc(parts);
@@ -51,7 +60,9 @@ export function StatsPanel({
     ];
 
   return (
-    <div className={`${PANEL} min-w-[225px] flex-[1_1_235px] p-[18px]`}>
+    <div
+      className={`${PANEL} min-w-[225px] flex-[1_1_235px] p-[18px] ${dimClass(dimmed)}`}
+    >
       <div className={PANEL_LABEL}>ROCKET STATS</div>
       <div className={`${PANEL_HINT} mt-1 mb-[14px]`}>
         Tap a stat to see what it means.

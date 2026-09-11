@@ -7,10 +7,13 @@ import { CHALLENGES } from "@/lib/rocket-lab/parts";
 import { type Sim, simulate } from "@/lib/rocket-lab/physics";
 import {
   finishFlight,
+  hasSeenTour,
   initialState,
   loadBests,
+  markTourSeen,
   reducer,
 } from "@/lib/rocket-lab/state";
+import { TOUR_STEPS } from "@/lib/rocket-lab/tour";
 import { BuildPanel } from "./build-panel";
 import { ChallengeBar } from "./challenge-bar";
 import { DraftModal } from "./draft-modal";
@@ -19,6 +22,8 @@ import { InfoModal } from "./info-modal";
 import { PartsBin } from "./parts-bin";
 import { ResultPanel } from "./result-panel";
 import { StatsPanel } from "./stats-panel";
+import { TourCoach } from "./tour-coach";
+import { dimClass } from "./styles";
 
 export function RocketLab() {
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -37,6 +42,7 @@ export function RocketLab() {
   useEffect(() => {
     const saved = loadBests();
     if (saved) dispatch({ type: "hydrate-bests", bests: saved });
+    if (!hasSeenTour()) dispatch({ type: "start-tour" });
   }, []);
 
   useEffect(
@@ -54,6 +60,19 @@ export function RocketLab() {
     const t = setTimeout(() => dispatch({ type: "clear-reject" }), 450);
     return () => clearTimeout(t);
   }, [state.reject]);
+
+  // Every tour step points at something inside the build row, so one anchor
+  // keeps the highlighted bay on screen throughout.
+  const buildRowRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (state.tourStep === null) return;
+    buildRowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [state.tourStep]);
+
+  const endTour = useCallback(() => {
+    markTourSeen();
+    dispatch({ type: "end-tour" });
+  }, []);
 
   const finish = useCallback((sim: Sim) => {
     const s = stateRef.current;
@@ -118,6 +137,12 @@ export function RocketLab() {
     CHALLENGES.find((c) => c.id === state.challenge) ?? CHALLENGES[0];
   const best = state.bests[state.challenge];
 
+  const step = state.tourStep !== null ? TOUR_STEPS[state.tourStep] : null;
+  const focus = step?.focus ?? null;
+  // The welcome step (focus null) dims nothing, so the newcomer sees the whole page.
+  const dimOthers = focus !== null;
+  const dimBin = focus === "angle" || focus === "launch";
+
   return (
     <div className="relative flex-1 overflow-hidden bg-rl-sky">
       <svg
@@ -163,6 +188,13 @@ export function RocketLab() {
               Build a rocket, launch it, find out why it flew that way.
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => dispatch({ type: "start-tour" })}
+            className="cursor-pointer rounded-[10px] border-none bg-white/14 px-[14px] py-[9px] text-[13px] font-extrabold text-white hover:bg-white/24"
+          >
+            How to play
+          </button>
           <div className="flex items-center gap-2 rounded-[10px] bg-white/14 px-[14px] py-[7px] text-[15px] font-extrabold">
             <span className="text-[11.5px] tracking-[1.1px] text-rl-mist">
               BEST
@@ -173,10 +205,22 @@ export function RocketLab() {
           </div>
         </header>
 
-        <ChallengeBar challenge={state.challenge} dispatch={dispatch} />
+        <ChallengeBar
+          challenge={state.challenge}
+          dimmed={dimOthers}
+          dispatch={dispatch}
+        />
 
-        <section className="flex flex-wrap items-stretch gap-[14px]">
-          <PartsBin parts={state.parts} dispatch={dispatch} />
+        <section
+          ref={buildRowRef}
+          className="flex flex-wrap items-stretch gap-[14px]"
+        >
+          <PartsBin
+            parts={state.parts}
+            dimmed={dimBin}
+            highlightSlot={step?.slot ?? null}
+            dispatch={dispatch}
+          />
           <BuildPanel
             parts={state.parts}
             angle={state.angle}
@@ -185,11 +229,16 @@ export function RocketLab() {
             over={state.over}
             reject={state.reject}
             onLaunch={launch}
+            highlightSlot={step?.slot ?? null}
+            highlightControl={
+              focus === "angle" || focus === "launch" ? focus : null
+            }
             dispatch={dispatch}
           />
           <StatsPanel
             parts={state.parts}
             mascot={state.mascot}
+            dimmed={dimOthers}
             dispatch={dispatch}
           />
         </section>
@@ -201,18 +250,23 @@ export function RocketLab() {
           count={state.count}
           hasResult={!!state.result}
           goal={challenge.goal}
+          dimmed={dimOthers}
         />
 
         {state.result && (
+          <div className={dimClass(dimOthers)}>
           <ResultPanel
             result={state.result}
             scoreShown={state.scoreShown}
             challengeName={challenge.name}
             dispatch={dispatch}
           />
+          </div>
         )}
 
-        <footer className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/70 px-[18px] py-3 text-[12.5px] font-bold text-rl-slate">
+        <footer
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/70 px-[18px] py-3 text-[12.5px] font-bold text-rl-slate ${dimClass(dimOthers)}`}
+        >
           <span>
             Rocket Lab keeps your best scores on your own device. Nothing is
             uploaded.
@@ -231,6 +285,16 @@ export function RocketLab() {
         )}
 
         {state.info && <InfoModal info={state.info} dispatch={dispatch} />}
+
+        {step && state.tourStep !== null && (
+          <TourCoach
+            step={step}
+            index={state.tourStep}
+            total={TOUR_STEPS.length}
+            onEnd={endTour}
+            dispatch={dispatch}
+          />
+        )}
       </div>
     </div>
   );

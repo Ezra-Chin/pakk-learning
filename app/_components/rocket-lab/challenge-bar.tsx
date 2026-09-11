@@ -2,16 +2,21 @@ import type { Dispatch } from "react";
 
 import { CHALLENGES, type ChallengeId } from "@/lib/rocket-lab/parts";
 import type { Action } from "@/lib/rocket-lab/state";
+import { dimClass } from "./styles";
 
 export function ChallengeBar({
   challenge,
+  dimmed = false,
   dispatch,
 }: {
   challenge: ChallengeId;
+  dimmed?: boolean;
   dispatch: Dispatch<Action>;
 }) {
   return (
-    <section className="flex flex-wrap gap-2 rounded-[14px] bg-white/55 p-2 shadow-[0_6px_16px_rgba(16,45,64,.12)]">
+    <section
+      className={`flex flex-wrap gap-2 rounded-[14px] bg-white/55 p-2 shadow-[0_6px_16px_rgba(16,45,64,.12)] ${dimClass(dimmed)}`}
+    >
       {CHALLENGES.map((c) => {
         const on = c.id === challenge;
         return (

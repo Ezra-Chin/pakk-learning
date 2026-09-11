@@ -6,9 +6,10 @@ import {
   currentOption,
 } from "@/lib/rocket-lab/parts";
 import type { Action, Phase } from "@/lib/rocket-lab/state";
+import { AngleDial } from "./angle-dial";
 import { zoneHandlers, zoneStyles } from "./drop-zone";
 import { RocketView } from "./rocket-view";
-import { PANEL, PANEL_LABEL } from "./styles";
+import { PANEL, PANEL_LABEL, dimClass } from "./styles";
 
 export function BuildPanel({
   parts,
@@ -18,6 +19,9 @@ export function BuildPanel({
   over,
   reject,
   onLaunch,
+  dimmed = false,
+  highlightSlot = null,
+  highlightControl = null,
   dispatch,
 }: {
   parts: Parts;
@@ -27,13 +31,17 @@ export function BuildPanel({
   over: SlotId | null;
   reject: boolean;
   onLaunch: () => void;
+  dimmed?: boolean;
+  highlightSlot?: SlotId | null;
+  highlightControl?: "angle" | "launch" | null;
   dispatch: Dispatch<Action>;
 }) {
-  const frame = zoneStyles("body", dragging, over);
+  const frame = zoneStyles("body", dragging, over, highlightSlot);
+  const glow = "rl-glow 1.6s ease-in-out infinite";
 
   return (
     <div
-      className={`${PANEL} flex min-w-[300px] flex-[2_1_330px] flex-col items-center gap-3 p-[18px]`}
+      className={`${PANEL} flex min-w-[300px] flex-[2_1_330px] flex-col items-center gap-3 p-[18px] ${dimClass(dimmed)}`}
     >
       <div className={`${PANEL_LABEL} self-start`}>YOUR ROCKET</div>
 
@@ -42,22 +50,33 @@ export function BuildPanel({
         dragging={dragging}
         over={over}
         reject={reject}
+        highlightSlot={highlightSlot}
         dispatch={dispatch}
       />
 
       <div
         {...zoneHandlers("body", dispatch)}
         className="w-full max-w-[290px] cursor-pointer rounded-[10px] px-[14px] py-[9px] text-center text-[14px] font-extrabold text-rl-ink shadow-[0_2px_6px_rgba(16,45,64,.1)]"
-        style={{ border: frame.border, background: frame.bg2 }}
+        style={{
+          border: frame.border,
+          background: frame.bg2,
+          animation: highlightSlot === "body" ? glow : undefined,
+        }}
       >
         Frame, {currentOption("body", parts).label}
       </div>
 
-      <div className="w-full max-w-[310px] rounded-[11px] bg-white px-[15px] py-[11px] shadow-[0_3px_10px_rgba(16,45,64,.1)]">
+      <div
+        className="w-full max-w-[310px] rounded-[11px] bg-white px-[15px] py-[11px] shadow-[0_3px_10px_rgba(16,45,64,.1)]"
+        style={{
+          animation: highlightControl === "angle" ? glow : undefined,
+        }}
+      >
         <div className="mb-1 flex justify-between text-[13.5px] font-extrabold">
           <span className="text-rl-slate">Launch angle</span>
           <span>{angle} degrees</span>
         </div>
+        <AngleDial angle={angle} />
         <input
           type="range"
           min={35}
@@ -77,6 +96,9 @@ export function BuildPanel({
         onClick={onLaunch}
         disabled={phase === "count" || phase === "fly"}
         className="cursor-pointer rounded-xl border-none bg-rl-orange px-[46px] py-[14px] text-[20px] font-black tracking-[.8px] text-white shadow-[0_6px_14px_rgba(216,110,15,.45),inset_0_1px_0_rgba(255,255,255,.6)] transition-transform duration-[120ms] [text-shadow:0_1px_2px_rgba(140,60,0,.45)] hover:-translate-y-0.5 active:translate-y-0.5"
+        style={{
+          animation: highlightControl === "launch" ? glow : undefined,
+        }}
       >
         LAUNCH
       </button>

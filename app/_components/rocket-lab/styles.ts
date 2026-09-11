@@ -13,3 +13,9 @@ export const TRACK =
 
 export const LEARN_BUTTON =
   "cursor-pointer rounded-[7px] border-none px-[10px] py-1 text-[11.5px] font-extrabold whitespace-nowrap text-rl-blue";
+
+/** Faded and inert while the tour is pointing somewhere else. */
+export const dimClass = (dimmed: boolean) =>
+  dimmed
+    ? "opacity-30 pointer-events-none transition-opacity duration-300"
+    : "transition-opacity duration-300";

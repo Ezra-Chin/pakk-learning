@@ -19,6 +19,7 @@ import {
   mascotLine,
   score,
 } from "./physics";
+import { TOUR_STEPS } from "./tour";
 
 export type Phase = "build" | "count" | "fly" | "result";
 
@@ -54,6 +55,8 @@ export type State = {
   scoreShown: number;
   bests: BestMap;
   mascot: string;
+  /** Index into TOUR_STEPS, or null when the tour is not running. */
+  tourStep: number | null;
 };
 
 export const initialState: State = {
@@ -80,6 +83,7 @@ export const initialState: State = {
   scoreShown: 0,
   bests: {},
   mascot: "Press launch and we will see what this thing does.",
+  tourStep: null,
 };
 
 export type Action =
@@ -104,7 +108,11 @@ export type Action =
   | { type: "frame"; fi: number }
   | { type: "finish"; result: Result; bests: BestMap; mascot: string }
   | { type: "score-shown"; value: number }
-  | { type: "modify" };
+  | { type: "modify" }
+  | { type: "start-tour" }
+  | { type: "tour-next" }
+  | { type: "tour-back" }
+  | { type: "end-tour" };
 
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -220,6 +228,23 @@ export function reducer(state: State, action: Action): State {
 
     case "modify":
       return { ...state, phase: "build" };
+
+    // Clear any open modal so it cannot sit on top of the coach card.
+    case "start-tour":
+      return { ...state, tourStep: 0, draft: null, info: null };
+
+    case "tour-next":
+      return state.tourStep === null
+        ? state
+        : { ...state, tourStep: Math.min(state.tourStep + 1, TOUR_STEPS.length - 1) };
+
+    case "tour-back":
+      return state.tourStep === null
+        ? state
+        : { ...state, tourStep: Math.max(0, state.tourStep - 1) };
+
+    case "end-tour":
+      return { ...state, tourStep: null };
   }
 }
 
@@ -239,6 +264,29 @@ function saveBests(bests: BestMap): void {
     localStorage.setItem(BESTS_KEY, JSON.stringify(bests));
   } catch {
     // Private browsing or a full quota. Scores are a nicety, not the point.
+  }
+}
+
+const TOUR_KEY = "rocketlab.tour.v1";
+
+/**
+ * Returns true when the tour should not auto-start. Storage failures count as
+ * "seen" so a private-browsing visitor is not re-prompted on every reload; the
+ * header button still reaches the tour on demand.
+ */
+export function hasSeenTour(): boolean {
+  try {
+    return localStorage.getItem(TOUR_KEY) !== null;
+  } catch {
+    return true;
+  }
+}
+
+export function markTourSeen(): void {
+  try {
+    localStorage.setItem(TOUR_KEY, "done");
+  } catch {
+    // Nothing to do. Worst case the tour offers itself again next visit.
   }
 }
 

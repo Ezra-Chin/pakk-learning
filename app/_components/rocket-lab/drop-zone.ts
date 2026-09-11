@@ -3,14 +3,22 @@ import type { DragEvent, Dispatch } from "react";
 import type { SlotId } from "@/lib/rocket-lab/parts";
 import type { Action } from "@/lib/rocket-lab/state";
 
-/** Dashed outlines only appear while a part is in hand; green means "drop here". */
+/**
+ * Dashed outlines only appear while a part is in hand; green means "drop here".
+ * The tour reuses the same green treatment via `highlight` to point at a bay.
+ */
 export function zoneStyles(
   slot: SlotId,
   dragging: SlotId | null,
   over: SlotId | null,
+  highlight: SlotId | null = null,
 ) {
-  const active = over === slot;
+  const active = over === slot || highlight === slot;
+  // Labels go high-contrast whenever they matter: mid-drag, or when the tour
+  // is naming this bay.
+  const lit = dragging !== null || highlight === slot;
   return {
+    active,
     border: active
       ? "2px dashed #43AF67"
       : dragging
@@ -18,8 +26,8 @@ export function zoneStyles(
         : "2px dashed rgba(0,0,0,0)",
     bg: active ? "rgba(67,175,103,.2)" : "transparent",
     bg2: active ? "rgba(67,175,103,.16)" : "#FFFFFF",
-    labelColor: dragging ? "#2F86D6" : "rgba(92,114,132,.75)",
-    labelBg: dragging ? "rgba(255,255,255,.95)" : "rgba(255,255,255,.6)",
+    labelColor: lit ? "#2F86D6" : "rgba(92,114,132,.75)",
+    labelBg: lit ? "rgba(255,255,255,.95)" : "rgba(255,255,255,.6)",
   };
 }
 

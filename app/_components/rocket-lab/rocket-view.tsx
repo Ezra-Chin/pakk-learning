@@ -51,12 +51,14 @@ export function RocketView({
   dragging,
   over,
   reject,
+  highlightSlot = null,
   dispatch,
 }: {
   parts: Parts;
   dragging: SlotId | null;
   over: SlotId | null;
   reject: boolean;
+  highlightSlot?: SlotId | null;
   dispatch: Dispatch<Action>;
 }) {
   const g = geometry(parts);
@@ -119,7 +121,7 @@ export function RocketView({
       </svg>
 
       {zoneDefs(parts).map((z) => {
-        const s = zoneStyles(z.slot, dragging, over);
+        const s = zoneStyles(z.slot, dragging, over, highlightSlot);
         return (
           <div
             key={z.slot}
@@ -132,6 +134,10 @@ export function RocketView({
               height: z.height,
               border: s.border,
               background: s.bg,
+              animation:
+                highlightSlot === z.slot
+                  ? "rl-glow 1.6s ease-in-out infinite"
+                  : undefined,
             }}
           >
             <span

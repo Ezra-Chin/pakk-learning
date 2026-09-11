@@ -1,5 +1,6 @@
 import { type Sim, stagePos } from "@/lib/rocket-lab/physics";
 import type { Phase } from "@/lib/rocket-lab/state";
+import { dimClass } from "./styles";
 
 const PAD = { x: 80, y: 342 };
 
@@ -10,6 +11,7 @@ export function FlightStage({
   count,
   hasResult,
   goal,
+  dimmed = false,
 }: {
   sim: Sim | null;
   phase: Phase;
@@ -17,6 +19,7 @@ export function FlightStage({
   count: number;
   hasResult: boolean;
   goal: string;
+  dimmed?: boolean;
 }) {
   const point = sim ? sim.traj[Math.min(fi, sim.traj.length - 1)] : null;
   const onPad = !sim || phase === "count";
@@ -60,7 +63,9 @@ export function FlightStage({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl shadow-[0_10px_24px_rgba(16,45,64,.16)]">
+    <section
+      className={`overflow-hidden rounded-2xl shadow-[0_10px_24px_rgba(16,45,64,.16)] ${dimClass(dimmed)}`}
+    >
       <div className="flex items-center justify-between gap-3 bg-rl-navy px-[18px] py-[11px]">
         <span className="text-[12.5px] font-black tracking-[1.4px] text-white">
           FLIGHT
