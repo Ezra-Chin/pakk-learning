@@ -97,3 +97,19 @@
     box-shadow: 0 0 0 7px rgba(67, 175, 103, 0.28);
   }
 }
+
+/*
+ * Neutralise the decorative motion: drifting clouds, the engine flame, the tour's
+ * pulsing glow, the wrong-bay shake, modal pop-ins and the bar transitions.
+ * The flight itself is rAF-driven JS and is deliberately left alone — watching the
+ * rocket fly is the content, not decoration.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

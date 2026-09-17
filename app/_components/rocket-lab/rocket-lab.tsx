@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 
-import { CHALLENGES } from "@/lib/rocket-lab/parts";
+import { CHALLENGES, type ChallengeId, type Parts } from "@/lib/rocket-lab/parts";
 import { type Sim, simulate } from "@/lib/rocket-lab/physics";
 import {
   finishFlight,
@@ -66,7 +66,13 @@ export function RocketLab() {
   const buildRowRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (state.tourStep === null) return;
-    buildRowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // scrollIntoView takes its behaviour as a JS option, so the reduced-motion
+    // media query in globals.css cannot reach it.
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    buildRowRef.current?.scrollIntoView({
+      behavior: still ? "auto" : "smooth",
+      block: "center",
+    });
   }, [state.tourStep]);
 
   const endTour = useCallback(() => {
@@ -74,30 +80,36 @@ export function RocketLab() {
     dispatch({ type: "end-tour" });
   }, []);
 
-  const finish = useCallback((sim: Sim) => {
-    const s = stateRef.current;
-    const { result, bests, mascot } = finishFlight(
-      sim,
-      s.challenge,
-      s.parts,
-      s.bests,
-    );
-    dispatch({ type: "finish", result, bests, mascot });
+  // `parts` and `challenge` are the ones that actually launched, passed down from
+  // launch(). Editing the rocket mid-flight must not rewrite the flight that is
+  // already in the air. `bests` is the exception: it is an accumulator, so it has
+  // to be read live.
+  const finish = useCallback(
+    (sim: Sim, parts: Parts, challenge: ChallengeId) => {
+      const { result, bests, mascot } = finishFlight(
+        sim,
+        challenge,
+        parts,
+        stateRef.current.bests,
+      );
+      dispatch({ type: "finish", result, bests, mascot });
 
-    const t0 = performance.now();
-    const anim = (now: number) => {
-      const k = Math.min(1, (now - t0) / 900);
-      dispatch({
-        type: "score-shown",
-        value: Math.round(result.sc.total * (1 - Math.pow(1 - k, 3))),
-      });
-      if (k < 1) scoreRaf.current = requestAnimationFrame(anim);
-    };
-    scoreRaf.current = requestAnimationFrame(anim);
-  }, []);
+      const t0 = performance.now();
+      const anim = (now: number) => {
+        const k = Math.min(1, (now - t0) / 900);
+        dispatch({
+          type: "score-shown",
+          value: Math.round(result.sc.total * (1 - Math.pow(1 - k, 3))),
+        });
+        if (k < 1) scoreRaf.current = requestAnimationFrame(anim);
+      };
+      scoreRaf.current = requestAnimationFrame(anim);
+    },
+    [],
+  );
 
   const play = useCallback(
-    (sim: Sim) => {
+    (sim: Sim, parts: Parts, challenge: ChallengeId) => {
       const frames = sim.traj.length;
       const dur = Math.min(4200, Math.max(1400, frames * 12));
       const t0 = performance.now();
@@ -105,7 +117,7 @@ export function RocketLab() {
         const k = Math.min(1, (now - t0) / dur);
         dispatch({ type: "frame", fi: Math.floor(k * (frames - 1)) });
         if (k < 1) flightRaf.current = requestAnimationFrame(step);
-        else finish(sim);
+        else finish(sim, parts, challenge);
       };
       flightRaf.current = requestAnimationFrame(step);
     },
@@ -116,7 +128,10 @@ export function RocketLab() {
     const s = stateRef.current;
     if (s.phase === "count" || s.phase === "fly") return;
 
-    const sim = simulate(s.parts, s.angle);
+    // Freeze the build being flown alongside the trajectory it produced.
+    const parts = s.parts;
+    const challenge = s.challenge;
+    const sim = simulate(parts, s.angle);
     dispatch({ type: "begin-launch", sim });
 
     const tick = (n: number) => {
@@ -126,7 +141,7 @@ export function RocketLab() {
           tick(n - 1);
         } else {
           dispatch({ type: "start-flight" });
-          play(sim);
+          play(sim, parts, challenge);
         }
       }, 700);
     };

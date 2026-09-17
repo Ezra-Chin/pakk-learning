@@ -63,17 +63,17 @@ export default function PrivacyPolicy() {
           <Section title="The short version">
             <P>
               Rocket Lab runs entirely in your browser. We do not ask for your
-              name, email or age, we do not run accounts, and we do not send your
-              play data anywhere. There is no server behind the game.
+              name, email or age, we do not run accounts, and we do not send
+              your play data anywhere. There is no server behind the game.
             </P>
           </Section>
 
           <Section title="What the game stores">
             <P>
               One item, saved in your browser local storage under the key
-              rocketlab.bests.v2. It holds your best score for each challenge and
-              the rocket parts that scored it, so the game can tell you what you
-              changed between attempts.
+              rocketlab.bests.v2. It holds your best score for each challenge
+              and the rocket parts that scored it, so the game can tell you what
+              you changed between attempts.
             </P>
             <P>
               That data never leaves your device. Clear your browser storage for
@@ -92,7 +92,8 @@ export default function PrivacyPolicy() {
             <P>
               None. The page uses Arial, a font already on your device, so no
               external font or script is fetched. Everything the game needs,
-              including the rocket art and the physics model, is part of the page.
+              including the rocket art and the physics model, is part of the
+              page.
             </P>
           </Section>
 
@@ -113,9 +114,12 @@ export default function PrivacyPolicy() {
 
           <Section title="Contact">
             <P>
-              Questions about this policy go to the address you publish with the
-              site. Add your contact email here before you put Rocket Lab on a
-              live domain.
+              <a
+                href="mailto:ezrachin05@gmail.com"
+                className="text-rl-navy underline"
+              >
+                ezrachin05@gmail.com
+              </a>
             </P>
           </Section>
         </main>

@@ -18,7 +18,6 @@ export function zoneStyles(
   // is naming this bay.
   const lit = dragging !== null || highlight === slot;
   return {
-    active,
     border: active
       ? "2px dashed #43AF67"
       : dragging

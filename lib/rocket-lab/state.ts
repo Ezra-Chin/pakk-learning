@@ -114,6 +114,9 @@ export type Action =
   | { type: "tour-back" }
   | { type: "end-tour" };
 
+/** True while a launch is counting down or in the air. */
+const inFlight = (s: State) => s.phase === "count" || s.phase === "fly";
+
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "hydrate-bests":
@@ -126,7 +129,7 @@ export function reducer(state: State, action: Action): State {
         challenge: ch.id,
         angle: ch.angle,
         result: null,
-        phase: "build",
+        phase: inFlight(state) ? state.phase : "build",
       };
     }
 
@@ -149,7 +152,7 @@ export function reducer(state: State, action: Action): State {
         ? {
             ...state,
             parts: withPart(state.parts, state.draft.slot, state.draft.value),
-            phase: "build",
+            phase: inFlight(state) ? state.phase : "build",
             draft: null,
           }
         : { ...state, draft: null };

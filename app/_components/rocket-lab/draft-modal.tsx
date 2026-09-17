@@ -1,4 +1,4 @@
-import type { Dispatch } from "react";
+import { type Dispatch, useCallback } from "react";
 
 import {
   GRAD,
@@ -9,6 +9,7 @@ import {
 } from "@/lib/rocket-lab/parts";
 import { calc, dragPct, massPct, pct } from "@/lib/rocket-lab/physics";
 import type { Action, Draft } from "@/lib/rocket-lab/state";
+import { useModal } from "./use-modal";
 
 export function DraftModal({
   draft,
@@ -19,6 +20,9 @@ export function DraftModal({
   parts: Parts;
   dispatch: Dispatch<Action>;
 }) {
+  const close = useCallback(() => dispatch({ type: "close-draft" }), [dispatch]);
+  const panel = useModal(close);
+
   const slot = PARTS[draft.slot];
   const now = calc(parts);
   const next = calc(withPart(parts, draft.slot, draft.value));
@@ -65,19 +69,26 @@ export function DraftModal({
 
   return (
     <div
-      onClick={() => dispatch({ type: "close-draft" })}
+      onClick={close}
       className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(22,45,60,.5)] p-[18px]"
     >
       <div
+        ref={panel}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rl-draft-title"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[88vh] w-full max-w-[440px] overflow-auto rounded-2xl bg-white p-[22px] shadow-[0_20px_50px_rgba(10,30,45,.4)]"
+        className="max-h-[88vh] w-full max-w-[440px] overflow-auto rounded-2xl bg-white p-[22px] shadow-[0_20px_50px_rgba(10,30,45,.4)] outline-none"
         style={{ animation: "rl-pop .2s ease-out" }}
       >
         <div className="flex items-center justify-between gap-2.5">
-          <div className="text-[20px] font-black">{slot.label}</div>
+          <div id="rl-draft-title" className="text-[20px] font-black">
+            {slot.label}
+          </div>
           <button
             type="button"
-            onClick={() => dispatch({ type: "close-draft" })}
+            onClick={close}
             aria-label="Close"
             className="h-8 w-8 cursor-pointer rounded-lg border-none bg-[#EEF4F8] text-[15px] font-extrabold text-rl-slate"
           >
