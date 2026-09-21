@@ -83,6 +83,12 @@ export type Sim = {
   traj: TrajPoint[];
   maxY: number;
   dist: number;
+  /**
+   * Furthest the path ever gets from the pad. `dist` is where the rocket ended
+   * up and is what the challenge scores; a wobbly flight can overshoot and drift
+   * back, so the drawing needs the wider of the two to fit.
+   */
+  reach: number;
   time: number;
   vmax: number;
   lifted: boolean;
@@ -101,6 +107,7 @@ export function simulate(parts: Parts, angleDeg: number): Sim {
   let vy = 0;
   let t = 0;
   let maxY = 0;
+  let reach = 0;
   let vmax = 0;
   let wp = 0;
 
@@ -143,6 +150,7 @@ export function simulate(parts: Parts, angleDeg: number): Sim {
     t += dt;
 
     if (y > maxY) maxY = y;
+    if (Math.abs(x) > reach) reach = Math.abs(x);
     if (v > vmax) vmax = v;
 
     traj.push({
@@ -155,17 +163,53 @@ export function simulate(parts: Parts, angleDeg: number): Sim {
 
   if (!traj.length) traj.push({ x: 0, y: 0, r: 0, burning: false });
 
-  return { m, traj, maxY, dist: Math.abs(x), time: t, vmax, lifted: maxY > 3 };
+  return {
+    m,
+    traj,
+    maxY,
+    dist: Math.abs(x),
+    reach,
+    time: t,
+    vmax,
+    lifted: maxY > 3,
+  };
 }
 
-/** Maps a trajectory sample into the 1000x420 flight-stage viewBox. */
+/** The part of the 1000x420 flight-stage viewBox the flight is drawn into. */
+export const STAGE = {
+  padX: 80,
+  groundY: 342,
+  topY: 24,
+  rightX: 960,
+  /** Floor on either span, so a five metre hop does not fill the whole sky. */
+  minSpan: 260,
+} as const;
+
+/** Metres of flight per stage unit. Shared by the path and its axis labels. */
+export function stageSpan(sim: Sim): { x: number; y: number } {
+  return {
+    x: Math.max(sim.reach, STAGE.minSpan),
+    y: Math.max(sim.maxY, STAGE.minSpan),
+  };
+}
+
+/**
+ * Maps a trajectory sample into the flight-stage viewBox. The spans above are
+ * the whole flight, so the peak lands exactly on the top edge and nothing is
+ * clipped: every metre climbed moves the rocket.
+ */
 export function stagePos(sim: Sim, i: number): { x: number; y: number } {
   const p = sim.traj[Math.min(Math.max(i, 0), sim.traj.length - 1)];
-  const sx = 880 / Math.max(sim.dist, 260);
-  const sy = 330 / Math.max(sim.maxY, 260);
+  const span = stageSpan(sim);
+  // Kept to a tenth of a unit rather than whole ones. Near the peak the rocket
+  // is barely moving, and whole-unit steps there read as a rocket that has
+  // stopped instead of one that is slowing down.
+  const round = (v: number) => Math.round(v * 10) / 10;
   return {
-    x: Math.round(Math.max(24, Math.min(976, 80 + p.x * sx))),
-    y: Math.round(Math.max(24, Math.min(376, 342 - p.y * sy))),
+    x: round(
+      Math.max(24, STAGE.padX + (p.x / span.x) * (STAGE.rightX - STAGE.padX)),
+    ),
+    y: round(STAGE.groundY - (p.y / span.y) * (STAGE.groundY - STAGE.topY)),
   };
 }
 

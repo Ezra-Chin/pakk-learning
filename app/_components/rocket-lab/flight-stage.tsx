@@ -1,8 +1,22 @@
-import { type Sim, stagePos } from "@/lib/rocket-lab/physics";
+import { STAGE, type Sim, stagePos, stageSpan } from "@/lib/rocket-lab/physics";
 import type { Phase } from "@/lib/rocket-lab/state";
 import { dimClass } from "./styles";
 
-const PAD = { x: 80, y: 342 };
+const PAD = { x: STAGE.padX, y: STAGE.groundY };
+
+/** Round steps (1, 2 or 5 times a power of ten) across a span. */
+function ticks(span: number, target: number): number[] {
+  const raw = span / target;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const n = raw / mag;
+  const step = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag;
+  const out: number[] = [];
+  for (let v = step; v <= span; v += step) out.push(v);
+  return out;
+}
+
+const metres = (v: number) =>
+  v >= 1000 ? +(v / 1000).toFixed(1) + " km" : Math.round(v) + " m";
 
 export function FlightStage({
   sim,
@@ -40,6 +54,16 @@ export function FlightStage({
     trail = pts.join(" ");
   }
 
+  // Labelled gridlines, so the flight can be read in metres rather than guessed
+  // at. Held back during the countdown, which would otherwise give away the
+  // height of a flight that has not happened yet.
+  const showScale = !!sim && !idle && phase !== "count";
+  const span = sim ? stageSpan(sim) : null;
+  const altTicks = showScale && span ? ticks(span.y, 6) : [];
+  const distTicks = showScale && span ? ticks(span.x, 8) : [];
+  const climb = STAGE.groundY - STAGE.topY;
+  const run = STAGE.rightX - STAGE.padX;
+
   const pos = onPad ? PAD : stagePos(sim, fi);
   const rot =
     !sim || (phase !== "fly" && phase !== "result")
@@ -48,7 +72,7 @@ export function FlightStage({
   const showFlame = phase === "fly" && !!point?.burning;
 
   let readout = "";
-  if (idle) {
+  if (idle || phase === "count") {
     readout = "On the pad. " + goal;
   } else if (sim && point) {
     readout =
@@ -91,6 +115,34 @@ export function FlightStage({
             <ellipse cx="1180" cy="110" rx="56" ry="20" fill="#FFFFFF" />
           </g>
 
+          {altTicks.map((v) => {
+            const y = STAGE.groundY - (v / span!.y) * climb;
+            return (
+              <g key={"alt" + v}>
+                <line
+                  x1="10"
+                  y1={y}
+                  x2="990"
+                  y2={y}
+                  stroke="#FFFFFF"
+                  strokeOpacity=".55"
+                  strokeWidth="1.5"
+                  strokeDasharray="5 9"
+                />
+                <text
+                  x="12"
+                  y={y - 5}
+                  fontSize="11.5"
+                  fontWeight="800"
+                  fill="#2C485C"
+                  fillOpacity=".5"
+                >
+                  {metres(v)}
+                </text>
+              </g>
+            );
+          })}
+
           <path
             d="M0 322 C 150 288 260 336 400 314 C 540 292 660 340 810 318 C 920 302 960 318 1000 310 L1000 420 L0 420 Z"
             fill="#A9DFEF"
@@ -106,6 +158,34 @@ export function FlightStage({
           />
 
           <rect x="46" y="358" width="72" height="20" rx="6" fill="#B6A489" />
+
+          {distTicks.map((v) => {
+            const x = STAGE.padX + (v / span!.x) * run;
+            return (
+              <g key={"dist" + v}>
+                <line
+                  x1={x}
+                  y1={STAGE.groundY}
+                  x2={x}
+                  y2={STAGE.groundY + 11}
+                  stroke="#2C485C"
+                  strokeOpacity=".3"
+                  strokeWidth="2"
+                />
+                <text
+                  x={x}
+                  y={STAGE.groundY + 26}
+                  textAnchor="middle"
+                  fontSize="11.5"
+                  fontWeight="800"
+                  fill="#2C485C"
+                  fillOpacity=".55"
+                >
+                  {metres(v)}
+                </text>
+              </g>
+            );
+          })}
 
           <polyline
             points={trail}
