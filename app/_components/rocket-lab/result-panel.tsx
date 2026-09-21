@@ -36,19 +36,23 @@ export function ResultPanel({
           <div className="text-[19px] font-black text-[#6D4A08]">
             New personal best, {bestJump}
           </div>
-          <div className="mt-2 mb-[7px] text-[12px] font-extrabold tracking-[1px] text-[#9A742A]">
-            WHAT CHANGED
-          </div>
-          <div className="flex flex-wrap gap-[7px]">
-            {result.changes.map((c) => (
-              <span
-                key={c.text}
-                className="rounded-[7px] bg-white/80 px-[11px] py-[5px] text-[12.5px] font-bold text-[#5C4310]"
-              >
-                {c.text}
-              </span>
-            ))}
-          </div>
+          {result.changes.length > 0 && (
+            <>
+              <div className="mt-2 mb-[7px] text-[12px] font-extrabold tracking-[1px] text-[#9A742A]">
+                WHAT CHANGED
+              </div>
+              <div className="flex flex-wrap gap-[7px]">
+                {result.changes.map((c) => (
+                  <span
+                    key={c.text}
+                    className="rounded-[7px] bg-white/80 px-[11px] py-[5px] text-[12.5px] font-bold text-[#5C4310]"
+                  >
+                    {c.text}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -90,7 +94,7 @@ export function ResultPanel({
           </button>
         </div>
 
-        <div className={`${PANEL} min-w-[290px] flex-[2_1_360px] p-5`}>
+        <div className={`${PANEL} min-w-[260px] flex-[2_1_360px] p-5`}>
           <div className={`${PANEL_LABEL} text-[12.5px]`}>WHAT HAPPENED</div>
           <div className={`${PANEL_HINT} mt-[5px] mb-[14px] text-[13.5px]`}>
             {result.sim.lifted
@@ -98,7 +102,7 @@ export function ResultPanel({
               : "Nothing flew. Here is the physics of why."}
           </div>
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-[11px]">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-[11px]">
             {result.feedback.map((f) => (
               <div
                 key={f.title}

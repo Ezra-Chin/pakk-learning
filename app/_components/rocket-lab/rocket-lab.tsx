@@ -61,19 +61,31 @@ export function RocketLab() {
     return () => clearTimeout(t);
   }, [state.reject]);
 
-  // Every tour step points at something inside the build row, so one anchor
-  // keeps the highlighted bay on screen throughout.
+  const step = state.tourStep !== null ? TOUR_STEPS[state.tourStep] : null;
+  const focus = step?.focus ?? null;
+
+  // The coach card is pinned to the bottom of the window, so a step has to
+  // scroll the control it is naming into the middle of the screen. Centring on
+  // the build row alone left the angle dial and the launch button under the card.
   const buildRowRef = useRef<HTMLElement | null>(null);
+  const angleRef = useRef<HTMLDivElement | null>(null);
+  const launchRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     if (state.tourStep === null) return;
+    const target =
+      focus === "angle"
+        ? angleRef.current
+        : focus === "launch"
+          ? launchRef.current
+          : buildRowRef.current;
     // scrollIntoView takes its behaviour as a JS option, so the reduced-motion
     // media query in globals.css cannot reach it.
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    buildRowRef.current?.scrollIntoView({
+    target?.scrollIntoView({
       behavior: still ? "auto" : "smooth",
       block: "center",
     });
-  }, [state.tourStep]);
+  }, [state.tourStep, focus]);
 
   const endTour = useCallback(() => {
     markTourSeen();
@@ -134,15 +146,19 @@ export function RocketLab() {
     const sim = simulate(parts, s.angle);
     dispatch({ type: "begin-launch", sim });
 
+    // 3, 2, 1, then a short beat on GO before the engine lights.
     const tick = (n: number) => {
       countdownTimer.current = setTimeout(() => {
         if (n > 0) {
           dispatch({ type: "countdown", count: n });
           tick(n - 1);
-        } else {
+          return;
+        }
+        dispatch({ type: "countdown", count: 0 });
+        countdownTimer.current = setTimeout(() => {
           dispatch({ type: "start-flight" });
           play(sim, parts, challenge);
-        }
+        }, 450);
       }, 700);
     };
     tick(2);
@@ -152,8 +168,6 @@ export function RocketLab() {
     CHALLENGES.find((c) => c.id === state.challenge) ?? CHALLENGES[0];
   const best = state.bests[state.challenge];
 
-  const step = state.tourStep !== null ? TOUR_STEPS[state.tourStep] : null;
-  const focus = step?.focus ?? null;
   // The welcome step (focus null) dims nothing, so the newcomer sees the whole page.
   const dimOthers = focus !== null;
   const dimBin = focus === "angle" || focus === "launch";
@@ -248,6 +262,8 @@ export function RocketLab() {
             highlightControl={
               focus === "angle" || focus === "launch" ? focus : null
             }
+            angleRef={angleRef}
+            launchRef={launchRef}
             dispatch={dispatch}
           />
           <StatsPanel

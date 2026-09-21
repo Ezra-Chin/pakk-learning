@@ -46,8 +46,10 @@ export function StatsPanel({
         color: GRAD.drag,
       },
       {
+        // Bar and number both read thrust against weight, which is what the
+        // score and the glossary use. The raw newtons are on the engine cards.
         label: "Thrust",
-        value: m.e.thrust + " N",
+        value: m.twr.toFixed(1) + "x weight",
         width: pct(thrustPct(m.twr)),
         color: GRAD.thrust,
       },

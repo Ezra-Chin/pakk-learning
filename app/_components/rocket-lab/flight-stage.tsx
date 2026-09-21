@@ -22,11 +22,14 @@ export function FlightStage({
   dimmed?: boolean;
 }) {
   const point = sim ? sim.traj[Math.min(fi, sim.traj.length - 1)] : null;
-  const onPad = !sim || phase === "count";
+  // Back on the pad: either nothing has flown yet, or the last flight was
+  // cleared (a new challenge) and its trajectory no longer describes anything.
+  const idle = phase === "build" && !hasResult;
+  const onPad = !sim || idle || phase === "count";
 
   // The dotted trail is drawn up to the current frame, thinned to ~160 points.
   let trail = "";
-  if (sim && !(phase === "build" && !hasResult)) {
+  if (sim && !idle) {
     const upto = phase === "count" ? 0 : fi;
     const stride = Math.max(1, Math.floor(sim.traj.length / 160));
     const pts: string[] = [];
@@ -45,7 +48,7 @@ export function FlightStage({
   const showFlame = phase === "fly" && !!point?.burning;
 
   let readout = "";
-  if (phase === "build" && !hasResult) {
+  if (idle) {
     readout = "On the pad. " + goal;
   } else if (sim && point) {
     readout =

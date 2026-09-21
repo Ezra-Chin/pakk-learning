@@ -39,7 +39,9 @@ export function DraftModal({
     {
       label: "Drag",
       v: dragPct(next.cd),
-      d: Math.round((next.cd - now.cd) * 100),
+      // A real percentage change, so swapping one part reports the same figure
+      // whatever the rest of the rocket is made of, and matches the flight notes.
+      d: Math.round((next.cd / now.cd - 1) * 100),
       unit: " percent",
       color: GRAD.drag,
     },

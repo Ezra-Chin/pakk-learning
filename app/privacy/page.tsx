@@ -48,7 +48,7 @@ export default function PrivacyPolicy() {
               Privacy policy
             </div>
             <div className="text-[13px] font-bold text-rl-mist">
-              Rocket Lab. Last updated 10 September 2026.
+              Rocket Lab. Last updated 21 September 2026.
             </div>
           </div>
           <Link
@@ -70,10 +70,12 @@ export default function PrivacyPolicy() {
 
           <Section title="What the game stores">
             <P>
-              One item, saved in your browser local storage under the key
-              rocketlab.bests.v2. It holds your best score for each challenge
-              and the rocket parts that scored it, so the game can tell you what
-              you changed between attempts.
+              Two items, saved in your browser local storage. The key
+              rocketlab.bests.v3 holds your best score for each challenge and
+              the rocket parts that scored it, so the game can tell you what you
+              changed between attempts. The key rocketlab.tour.v1 records only
+              that you have seen the how-to-play tour, so it does not open
+              itself again on your next visit.
             </P>
             <P>
               That data never leaves your device. Clear your browser storage for

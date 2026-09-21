@@ -251,7 +251,8 @@ export function reducer(state: State, action: Action): State {
   }
 }
 
-const BESTS_KEY = "rocketlab.bests.v2";
+// v3: the scoring bounds were recalibrated, so v2 totals are not comparable.
+const BESTS_KEY = "rocketlab.bests.v3";
 
 export function loadBests(): BestMap | null {
   try {

@@ -1,15 +1,26 @@
 import type { Dispatch } from "react";
 
-import type { Parts, SlotId } from "@/lib/rocket-lab/parts";
+import { PARTS, type Parts, type SlotId, currentOption } from "@/lib/rocket-lab/parts";
 import type { Action } from "@/lib/rocket-lab/state";
 import { zoneHandlers, zoneStyles } from "./drop-zone";
+
+/** Top and bottom of the fin shapes below, before the frame offset. */
+const FIN_SPAN: Record<Parts["fins"], [top: number, bottom: number]> = {
+  small: [250, 292],
+  medium: [226, 296],
+  large: [196, 301],
+};
 
 /** Drawing measurements in the 200x480 rocket viewBox, derived from the build. */
 function geometry(parts: Parts) {
   const long = parts.body === "long";
+  const finY = long ? 58 : 0;
+  const [finTop, finBottom] = FIN_SPAN[parts.fins];
   return {
     bodyH: long ? 274 : 214,
-    finY: long ? 58 : 0,
+    finY,
+    finTop: finTop + finY,
+    finBottom: finBottom + finY,
     fuelTop: long ? 190 : 150,
     fuelH: parts.fuel === "small" ? 50 : parts.fuel === "medium" ? 86 : 118,
     engTop: long ? 360 : 300,
@@ -20,6 +31,11 @@ function geometry(parts: Parts) {
   };
 }
 
+type Geometry = ReturnType<typeof geometry>;
+
+/** A length in the 480-tall viewBox, as a percentage of the overlay box. */
+const pc = (v: number) => (v / 480) * 100 + "%";
+
 type ZoneDef = {
   slot: SlotId;
   label: string;
@@ -29,12 +45,22 @@ type ZoneDef = {
   height: string;
 };
 
-function zoneDefs(parts: Parts): ZoneDef[] {
+/** `g` is the same geometry the drawing uses, so the bays move with the parts. */
+function zoneDefs(parts: Parts, g: Geometry): ZoneDef[] {
   return [
     { slot: "nose", label: "NOSE", left: "29%", top: "3%", width: "42%", height: "16%" },
     { slot: "payload", label: "PAYLOAD", left: "29%", top: "19.5%", width: "42%", height: "11%" },
     { slot: "fuel", label: "FUEL", left: "29%", top: "31%", width: "42%", height: "21%" },
-    { slot: "fins", label: "FINS", left: "2%", top: "46%", width: "25%", height: "20%" },
+    {
+      slot: "fins",
+      label: "FINS",
+      left: "2%",
+      // Taken straight from the fin shapes, so the bay lands on the fins for
+      // every fin size and both frames. 480 is the viewBox height.
+      top: pc(g.finTop),
+      width: "25%",
+      height: pc(g.finBottom - g.finTop),
+    },
     {
       slot: "engine",
       label: "ENGINE",
@@ -65,14 +91,12 @@ export function RocketView({
 
   return (
     <div
-      className="relative h-[450px] w-[250px]"
+      className="relative h-[450px] w-[250px] max-w-full"
       style={{ animation: reject ? "rl-shake .45s ease-in-out" : "none" }}
     >
       <svg
         viewBox="0 0 200 480"
-        width={250}
-        height={450}
-        className="absolute inset-0 overflow-visible"
+        className="absolute inset-0 h-full w-full overflow-visible"
       >
         <ellipse cx="100" cy="452" rx="70" ry="10" fill="rgba(16,45,64,.13)" />
 
@@ -120,12 +144,13 @@ export function RocketView({
         )}
       </svg>
 
-      {zoneDefs(parts).map((z) => {
+      {zoneDefs(parts, g).map((z) => {
         const s = zoneStyles(z.slot, dragging, over, highlightSlot);
         return (
           <div
             key={z.slot}
             {...zoneHandlers(z.slot, dispatch)}
+            aria-label={`${PARTS[z.slot].label}, ${currentOption(z.slot, parts).label}`}
             className="absolute flex cursor-pointer items-end justify-center rounded-[10px]"
             style={{
               left: z.left,

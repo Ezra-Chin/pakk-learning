@@ -1,4 +1,4 @@
-import type { Dispatch } from "react";
+import type { Dispatch, RefObject } from "react";
 
 import {
   type Parts,
@@ -22,6 +22,8 @@ export function BuildPanel({
   dimmed = false,
   highlightSlot = null,
   highlightControl = null,
+  angleRef,
+  launchRef,
   dispatch,
 }: {
   parts: Parts;
@@ -34,6 +36,9 @@ export function BuildPanel({
   dimmed?: boolean;
   highlightSlot?: SlotId | null;
   highlightControl?: "angle" | "launch" | null;
+  /** Scroll anchors for the two tour steps that point at these controls. */
+  angleRef?: RefObject<HTMLDivElement | null>;
+  launchRef?: RefObject<HTMLButtonElement | null>;
   dispatch: Dispatch<Action>;
 }) {
   const frame = zoneStyles("body", dragging, over, highlightSlot);
@@ -41,7 +46,7 @@ export function BuildPanel({
 
   return (
     <div
-      className={`${PANEL} flex min-w-[300px] flex-[2_1_330px] flex-col items-center gap-3 p-[18px] ${dimClass(dimmed)}`}
+      className={`${PANEL} flex min-w-[260px] flex-[2_1_330px] flex-col items-center gap-3 p-[18px] ${dimClass(dimmed)}`}
     >
       <div className={`${PANEL_LABEL} self-start`}>YOUR ROCKET</div>
 
@@ -67,6 +72,7 @@ export function BuildPanel({
       </div>
 
       <div
+        ref={angleRef}
         className="w-full max-w-[310px] rounded-[11px] bg-white px-[15px] py-[11px] shadow-[0_3px_10px_rgba(16,45,64,.1)]"
         style={{
           animation: highlightControl === "angle" ? glow : undefined,
@@ -92,6 +98,7 @@ export function BuildPanel({
       </div>
 
       <button
+        ref={launchRef}
         type="button"
         onClick={onLaunch}
         disabled={phase === "count" || phase === "fly"}

@@ -314,7 +314,7 @@ export const INFO: Record<InfoKey, [title: string, body: string]> = {
   ],
   Angle: [
     "Launch angle",
-    "Straight up gets you the most height. Tilting over trades height for distance.\n\nWith no air, about 45 degrees flies the furthest. With drag in the way, slightly lower angles often win.",
+    "Straight up gets you the most height. Tilting over trades height for distance.\n\nThrow a stone and 45 degrees carries it furthest. Your rocket keeps pushing after launch, so it climbs while it travels and usually flies furthest somewhere above 45. Try a few angles and watch the distance.",
   ],
 };
 

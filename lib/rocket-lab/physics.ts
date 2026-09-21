@@ -184,24 +184,30 @@ export function score(sim: Sim, challenge: ChallengeId): Score {
   const cl = (v: number) => Math.max(0, Math.min(100, v));
   const map = (v: number, a: number, b: number) => cl(((v - a) / (b - a)) * 100);
 
+  // Every bound below is the range this model can actually reach, measured by
+  // sweeping all 648 builds across every launch angle. Bounds set beyond that
+  // range cost the player marks nobody can earn.
   const cats: Cats = {
-    aero: map(1.55 - m.cd, 0, 0.95),
-    weight: 100 - map(m.total, 22, 92),
-    thrust: map(m.twr, 1.0, 6.5),
+    aero: map(1.46 - m.cd, 0, 0.85),
+    weight: 100 - map(m.total, 23, 84),
+    thrust: map(m.twr, 0.8, 6.0),
     stability: m.stab * 100,
-    efficiency: map(sim.maxY / (m.fu.mass + 2), 4, 42),
+    efficiency: map(sim.maxY / (m.fu.mass + 2), 2, 90),
   };
 
   let goal = 0;
-  if (challenge === "altitude") goal = map(sim.maxY, 80, 3800);
-  else if (challenge === "distance") goal = map(sim.dist, 150, 8000);
-  else goal = map((m.p.mass * sim.maxY) / 1000, 0, 26);
+  if (challenge === "altitude") goal = map(sim.maxY, 80, 2700);
+  else if (challenge === "distance") goal = map(sim.dist, 150, 4400);
+  else goal = map((m.p.mass * sim.maxY) / 1000, 0, 23.5);
 
   const avg =
     (cats.aero + cats.weight + cats.thrust + cats.stability + cats.efficiency) /
     5;
 
-  return { cats, goal, total: Math.round(cl(0.55 * goal + 0.45 * avg)) };
+  // Weighted toward the challenge so that mastering one lands near 100. The
+  // five categories pull against each other, so the build-quality share stays
+  // small enough that no challenge is capped far below the others.
+  return { cats, goal, total: Math.round(cl(0.7 * goal + 0.3 * avg)) };
 }
 
 export type FeedbackItem = {

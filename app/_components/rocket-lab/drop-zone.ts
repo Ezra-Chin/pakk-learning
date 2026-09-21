@@ -1,4 +1,4 @@
-import type { DragEvent, Dispatch } from "react";
+import type { DragEvent, Dispatch, KeyboardEvent } from "react";
 
 import type { SlotId } from "@/lib/rocket-lab/parts";
 import type { Action } from "@/lib/rocket-lab/state";
@@ -30,8 +30,21 @@ export function zoneStyles(
   };
 }
 
+/**
+ * Drop target plus the button behaviour that goes with it. The bays are divs so
+ * they can sit over the rocket drawing, so they have to say what they are and
+ * answer the keyboard themselves.
+ */
 export function zoneHandlers(slot: SlotId, dispatch: Dispatch<Action>) {
   return {
+    role: "button",
+    tabIndex: 0,
+    onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        dispatch({ type: "open-draft", slot });
+      }
+    },
     onDragOver: (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       dispatch({ type: "drag-over", slot });
