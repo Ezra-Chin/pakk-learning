@@ -108,7 +108,6 @@ export type Action =
   | { type: "frame"; fi: number }
   | { type: "finish"; result: Result; bests: BestMap; mascot: string }
   | { type: "score-shown"; value: number }
-  | { type: "modify" }
   | { type: "start-tour" }
   | { type: "tour-next" }
   | { type: "tour-back" }
@@ -228,9 +227,6 @@ export function reducer(state: State, action: Action): State {
 
     case "score-shown":
       return { ...state, scoreShown: action.value };
-
-    case "modify":
-      return { ...state, phase: "build" };
 
     // Clear any open modal so it cannot sit on top of the coach card.
     case "start-tour":

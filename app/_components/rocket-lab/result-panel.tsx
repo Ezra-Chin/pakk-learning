@@ -84,14 +84,6 @@ export function ResultPanel({
               </div>
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={() => dispatch({ type: "modify" })}
-            className="mt-[18px] cursor-pointer rounded-[10px] border-none bg-white px-[22px] py-[11px] text-[15px] font-black whitespace-nowrap text-rl-ink shadow-[0_4px_10px_rgba(16,45,64,.16)] hover:-translate-y-px"
-          >
-            Modify rocket
-          </button>
         </div>
 
         <div className={`${PANEL} min-w-[260px] flex-[2_1_360px] p-5`}>
