@@ -35,7 +35,11 @@ export function FlightStage({
   goal: string;
   dimmed?: boolean;
 }) {
-  const point = sim ? sim.traj[Math.min(fi, sim.traj.length - 1)] : null;
+  // Clamped at both ends, the same way stagePos reads the trajectory: the frame
+  // index comes from an animation and must never index off either edge.
+  const point = sim
+    ? sim.traj[Math.min(Math.max(fi, 0), sim.traj.length - 1)]
+    : null;
   // Back on the pad: either nothing has flown yet, or the last flight was
   // cleared (a new challenge) and its trajectory no longer describes anything.
   const idle = phase === "build" && !hasResult;
@@ -66,9 +70,9 @@ export function FlightStage({
 
   const pos = onPad ? PAD : stagePos(sim, fi);
   const rot =
-    !sim || (phase !== "fly" && phase !== "result")
+    !point || (phase !== "fly" && phase !== "result")
       ? 0
-      : Math.round(Math.max(-160, Math.min(160, point!.r)));
+      : Math.round(Math.max(-160, Math.min(160, point.r)));
   const showFlame = phase === "fly" && !!point?.burning;
 
   let readout = "";

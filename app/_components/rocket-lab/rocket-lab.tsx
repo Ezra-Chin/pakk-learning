@@ -25,6 +25,16 @@ import { StatsPanel } from "./stats-panel";
 import { TourCoach } from "./tour-coach";
 import { dimClass } from "./styles";
 
+/**
+ * Progress along an animation, 0 to 1. The floor matters: a rAF callback is
+ * handed the start time of the frame it runs in, which can be a fraction of a
+ * millisecond *before* the performance.now() taken just above when the timer
+ * that scheduled it fired inside that same frame. That makes the first frame's
+ * elapsed time negative, and a negative fraction indexes off the front of the
+ * trajectory.
+ */
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
 export function RocketLab() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -108,7 +118,7 @@ export function RocketLab() {
 
       const t0 = performance.now();
       const anim = (now: number) => {
-        const k = Math.min(1, (now - t0) / 900);
+        const k = clamp01((now - t0) / 900);
         dispatch({
           type: "score-shown",
           value: Math.round(result.sc.total * (1 - Math.pow(1 - k, 3))),
@@ -126,7 +136,7 @@ export function RocketLab() {
       const dur = Math.min(4200, Math.max(1400, frames * 12));
       const t0 = performance.now();
       const step = (now: number) => {
-        const k = Math.min(1, (now - t0) / dur);
+        const k = clamp01((now - t0) / dur);
         dispatch({ type: "frame", fi: Math.floor(k * (frames - 1)) });
         if (k < 1) flightRaf.current = requestAnimationFrame(step);
         else finish(sim, parts, challenge);
